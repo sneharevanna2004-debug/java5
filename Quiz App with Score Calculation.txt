@@ -1,0 +1,256 @@
+Quiz App with Score Calculation
+Frontend (React)
+App.js
+
+
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+
+function App() {
+
+  const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState({});
+  const [score, setScore] = useState(null);
+
+  // Fetch questions from backend
+  useEffect(() => {
+    axios.get("http://localhost:8080/questions")
+      .then((response) => {
+        setQuestions(response.data);
+      });
+  }, []);
+
+  // Store selected answers
+  const handleOptionChange = (questionId, option) => {
+    setAnswers({
+      ...answers,
+      [questionId]: option
+    });
+  };
+
+  // Submit quiz and calculate score
+  const submitQuiz = () => {
+    let totalScore = 0;
+
+    questions.forEach((q) => {
+      if (answers[q.id] === q.correctAnswer) {
+        totalScore++;
+      }
+    });
+
+    setScore(totalScore);
+  };
+
+  return (
+    <div style={{ padding: "20px" }}>
+      <h1>Quiz App</h1>
+
+      {questions.map((q) => (
+        <div key={q.id} style={{ marginBottom: "20px" }}>
+          <h3>{q.question}</h3>
+
+          <label>
+            <input
+              type="radio"
+              name={q.id}
+              onChange={() =>
+                handleOptionChange(q.id, q.option1)
+              }
+            />
+            {q.option1}
+          </label>
+
+          <br />
+
+          <label>
+            <input
+              type="radio"
+              name={q.id}
+              onChange={() =>
+                handleOptionChange(q.id, q.option2)
+              }
+            />
+            {q.option2}
+          </label>
+
+          <br />
+
+          <label>
+            <input
+              type="radio"
+              name={q.id}
+              onChange={() =>
+                handleOptionChange(q.id, q.option3)
+              }
+            />
+            {q.option3}
+          </label>
+
+          <br />
+
+          <label>
+            <input
+              type="radio"
+              name={q.id}
+              onChange={() =>
+                handleOptionChange(q.id, q.option4)
+              }
+            />
+            {q.option4}
+          </label>
+        </div>
+      ))}
+
+      <button onClick={submitQuiz}>
+        Submit Quiz
+      </button>
+
+      {score !== null && (
+        <h2>Your Score: {score}</h2>
+      )}
+    </div>
+  );
+}
+
+export default App;
+
+
+
+Backend (Spring Boot + MongoDB)
+Question.java
+
+
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "questions")
+public class Question {
+
+    @Id
+    private String id;
+
+    private String question;
+    private String option1;
+    private String option2;
+    private String option3;
+    private String option4;
+    private String correctAnswer;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getQuestion() {
+        return question;
+    }
+
+    public void setQuestion(String question) {
+        this.question = question;
+    }
+
+    public String getOption1() {
+        return option1;
+    }
+
+    public void setOption1(String option1) {
+        this.option1 = option1;
+    }
+
+    public String getOption2() {
+        return option2;
+    }
+
+    public void setOption2(String option2) {
+        this.option2 = option2;
+    }
+
+    public String getOption3() {
+        return option3;
+    }
+
+    public void setOption3(String option3) {
+        this.option3 = option3;
+    }
+
+    public String getOption4() {
+        return option4;
+    }
+
+    public void setOption4(String option4) {
+        this.option4 = option4;
+    }
+
+    public String getCorrectAnswer() {
+        return correctAnswer;
+    }
+
+    public void setCorrectAnswer(String correctAnswer) {
+        this.correctAnswer = correctAnswer;
+    }
+}
+
+
+QuestionRepository.java
+
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+public interface QuestionRepository
+        extends MongoRepository<Question, String> {
+}
+
+
+QuestionController.java
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@CrossOrigin("*")
+public class QuestionController {
+
+    @Autowired
+    private QuestionRepository repository;
+
+    // Fetch all questions
+    @GetMapping("/questions")
+    public List<Question> getQuestions() {
+        return repository.findAll();
+    }
+
+    // Add new question
+    @PostMapping("/questions")
+    public Question addQuestion(
+            @RequestBody Question question) {
+
+        return repository.save(question);
+    }
+}
+
+
+
+application.properties
+
+
+spring.data.mongodb.uri=mongodb://localhost:27017/quizdb
+spring.data.mongodb.database=quizdb
+server.port=8080
+
+
+MongoDB Sample Data
+
+
+{
+  "question": "Java is?",
+  "option1": "Programming Language",
+  "option2": "Database",
+  "option3": "Browser",
+  "option4": "OS",
+  "correctAnswer": "Programming Language"
+}
